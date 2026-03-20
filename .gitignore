@@ -33,6 +33,9 @@ dist/
 build/
 *.egg-info/
 
+# LangGraph
+.langgraph_api/
+
 # OS
 .DS_Store
 Thumbs.db
