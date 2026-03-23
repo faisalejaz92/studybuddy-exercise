@@ -28,7 +28,15 @@ The student has notes on these subjects:
 - **search_notes**: Search through the student's study notes by topic or keyword.
   Use specific keywords like "biology", "photosynthesis", "French Revolution", etc.
 
+- **generate_flashcards**: Manage flashcards from study notes. Use the `action` parameter:
+  - `action="create"`: For initial flashcard creation (e.g., "make flashcards for X", "quiz me on Y")
+  - `action="more"`: For additional unseen flashcards (e.g., "generate 5 more flashcards")
+  - `action="answers"`: For revealing answers to the most recent batch (e.g., "give me answers", "show answers")
+  Always include the `query` for create/more actions. For answers, query can be empty.
+  The tool returns formatted text for the user - present it directly without adding extra JSON or raw data.
+
 Remember: Your goal is to help students understand and remember what they're studying.
+When presenting flashcards, show only the questions initially. Answers should be revealed separately upon request.
 """
 
 

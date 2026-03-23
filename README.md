@@ -140,6 +140,29 @@ exercise is figuring out what to build.
 - What's a reasonable MVP scope for 1.5 hours?
 - What tradeoffs are you making? (complexity, persistence, polish)
 
+**Implementation Summary (Issue 1 - Flashcards MVP):**
+
+Implemented a stateful flashcard system that addresses the core UX problems:
+
+- **State Model**: Thread-persistent flashcard session with `source_topic`, `all_generated_cards`, `shown_card_ids`, `last_served_card_ids`, and `answers_revealed` flag.
+- **Duplicate Prevention**: Deterministic card IDs (MD5 hash of question+answer+topic) ensure reliable filtering of previously shown cards.
+- **Stop Condition**: Hard stop when zero new cards remain, returning "I've already shown you all X unique flashcards from your notes."
+- **Session Management**: Resets on topic change, preserves state across conversation turns.
+- **Action-Based Tool**: `generate_flashcards` with `action` parameter ("create", "more", "answers") for distinct behaviors.
+- **Questions-First UX**: Initial generation returns questions only; separate "answers" action reveals solutions for the latest batch.
+- **Clean Question Generation**: Facts parsed to separate questions from answers, with validation for malformed strings. Questions use "What is/are" format without answer leakage.
+- **Formatted Output**: Tool returns readable assistant text instead of JSON, preventing UI leakage. Questions shown initially, answers revealed separately.
+- **Latest-Batch Answers**: "Give me answers" reveals answers only for the most recently served flashcards.
+
+**Why This Fixes the Issue:**
+- Eliminates answer leakage in initial question display
+- Prevents regeneration of shown cards
+- Stops loops when insufficient cards remain
+- Provides clean, readable UI output without JSON artifacts
+- Ensures answers correspond to the latest question batch
+- Maintains existing search/chat behavior
+- Provides clean, testable state transitions
+
 ---
 
 ### Issue 2: "Support can't help users" (~1 hr)
