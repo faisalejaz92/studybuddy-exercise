@@ -49,3 +49,12 @@ def test_graph_responds_to_message():
 
     assert len(result["messages"]) == 2
     assert "Hello" in result["messages"][-1].content
+
+
+def test_system_prompt_mentions_flashcards_tool():
+    """System prompt should mention generate_flashcards as a study review option."""
+    from graph.prompts.system import format_system_prompt
+
+    prompt = format_system_prompt()
+    assert "generate_flashcards" in prompt
+    assert "quiz me" in prompt

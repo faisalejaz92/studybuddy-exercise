@@ -28,6 +28,10 @@ The student has notes on these subjects:
 - **search_notes**: Search through the student's study notes by topic or keyword.
   Use specific keywords like "biology", "photosynthesis", "French Revolution", etc.
 
+- **generate_flashcards**: Retrieve relevant notes and generate 3–5 short, structured flashcards with keys `question`, `answer`, and optional `topic`.
+  Use this tool for review-focused intents like "quiz me", "make flashcards", "help me remember", or "studying time".
+  If notes are insufficient, return a graceful message and ask the user to try a different topic.
+
 Remember: Your goal is to help students understand and remember what they're studying.
 """
 

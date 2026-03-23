@@ -84,23 +84,12 @@ Prokaryotic cells (bacteria) lack membrane-bound organelles.""",
 ]
 
 
-@tool
-def search_notes(query: str) -> str:
-    """Search through study notes to find relevant information.
-
-    Args:
-        query: The search query - can be a topic, keyword, or question.
-
-    Returns:
-        Relevant notes content or a message if nothing found.
-    """
-    print(f"search_notes called with query: {query}")
-
+def _find_matching_notes(query: str):
+    """Return notes that match the query using the same logic as search_notes."""
     query_lower = query.lower()
     matching_notes = []
 
     for note in SAMPLE_NOTES:
-        # Check title, content, subject, and tags
         searchable = (
             note["title"].lower()
             + " "
@@ -113,7 +102,46 @@ def search_notes(query: str) -> str:
 
         if any(word in searchable for word in query_lower.split()):
             matching_notes.append(note)
-            print(f"  Found match: {note['title']}")
+
+    return matching_notes
+
+
+def _extract_fact_items(note):
+    """Extract lines from content that look like facts to make flashcards."""
+    lines = []
+    for raw_line in note["content"].splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("-") or line.startswith("*") or line[0].isdigit():
+            lines.append(line.lstrip("-*0123456789. ").strip())
+
+    # fallback to first sentence(s)
+    if not lines:
+        first_paragraph = note["content"].split("\n\n")[0].strip()
+        for sentence in first_paragraph.split("."):
+            sentence = sentence.strip()
+            if sentence:
+                lines.append(sentence)
+                if len(lines) >= 3:
+                    break
+
+    return lines
+
+
+@tool
+def search_notes(query: str) -> str:
+    """Search through study notes to find relevant information.
+
+    Args:
+        query: The search query - can be a topic, keyword, or question.
+
+    Returns:
+        Relevant notes content or a message if nothing found.
+    """
+    print(f"search_notes called with query: {query}")
+
+    matching_notes = _find_matching_notes(query)
 
     if not matching_notes:
         print("  No matches found")
@@ -128,3 +156,52 @@ def search_notes(query: str) -> str:
 
     print(f"  Returning {len(matching_notes)} notes")
     return "\n\n---\n\n".join(results)
+
+
+@tool
+def generate_flashcards(query: str, max_cards: int = 5) -> str:
+    """Generate 3-5 structured flashcards grounded in retrieved notes.
+
+    Returns a JSON array of flashcards with keys:
+      question, answer, optional topic
+
+    If notes are insufficient, the tool responds gracefully.
+    """
+    print(f"generate_flashcards called with query: {query}, max_cards={max_cards}")
+
+    matching_notes = _find_matching_notes(query)
+    if not matching_notes:
+        msg = "No notes found matching your query. Can't generate flashcards right now."
+        print(f"  {msg}")
+        return msg
+
+    cards = []
+    for note in matching_notes:
+        fact_items = _extract_fact_items(note)
+        if not fact_items:
+            continue
+
+        for fact in fact_items:
+            if len(cards) >= max_cards:
+                break
+            question = f"What is: {fact}?"
+            answer = fact
+            cards.append({"question": question, "answer": answer, "topic": note["title"]})
+
+        if len(cards) >= max_cards:
+            break
+
+    if not cards:
+        msg = "Found notes but could not extract good flashcards. Try a different query."
+        print(f"  {msg}")
+        return msg
+
+    if len(cards) < 3:
+        note_names = ", ".join([n["title"] for n in matching_notes])
+        print(f"  Only {len(cards)} cards generated from notes: {note_names}")
+
+    import json
+
+    result = json.dumps(cards, indent=2, ensure_ascii=False)
+    print(f"  Generated {len(cards)} flashcards")
+    return result
