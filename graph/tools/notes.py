@@ -3,7 +3,13 @@
 This tool searches through the user's study notes and returns relevant content.
 """
 
+import time
+
 from langchain_core.tools import tool
+
+from graph.utils.logger import get_logger
+
+log = get_logger(__name__)
 
 # Sample notes data - in a real app this would come from a database
 SAMPLE_NOTES = [
@@ -94,7 +100,11 @@ def search_notes(query: str) -> str:
     Returns:
         Relevant notes content or a message if nothing found.
     """
-    print(f"search_notes called with query: {query}")
+    start = time.monotonic()
+    log.info(
+        "tool.search_notes.start",
+        extra={"tool_name": "search_notes", "status": "start"},
+    )
 
     query_lower = query.lower()
     matching_notes = []
@@ -113,11 +123,31 @@ def search_notes(query: str) -> str:
 
         if any(word in searchable for word in query_lower.split()):
             matching_notes.append(note)
-            print(f"  Found match: {note['title']}")
+
+    duration_ms = round((time.monotonic() - start) * 1000, 1)
 
     if not matching_notes:
-        print("  No matches found")
+        log.info(
+            "tool.search_notes.complete",
+            extra={
+                "tool_name": "search_notes",
+                "status": "success",
+                "results_count": 0,
+                "duration_ms": duration_ms,
+            },
+        )
         return "No notes found matching your query. Try different keywords or check if you have notes on this topic."
+
+    log.info(
+        "tool.search_notes.complete",
+        extra={
+            "tool_name": "search_notes",
+            "status": "success",
+            "results_count": len(matching_notes),
+            "matched_titles": [n["title"] for n in matching_notes],
+            "duration_ms": duration_ms,
+        },
+    )
 
     # Format results
     results = []
@@ -126,5 +156,4 @@ def search_notes(query: str) -> str:
             f"## {note['title']}\n**Subject:** {note['subject']}\n\n{note['content']}"
         )
 
-    print(f"  Returning {len(matching_notes)} notes")
     return "\n\n---\n\n".join(results)

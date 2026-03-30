@@ -7,11 +7,15 @@ question/answer pairs strictly grounded in that content.
 
 import json
 import os
+import time
 
 from langchain.chat_models import init_chat_model
 from langchain_core.tools import tool
 
 from graph.tools.notes import SAMPLE_NOTES
+from graph.utils.logger import get_logger
+
+log = get_logger(__name__)
 
 AVAILABLE_TOPICS = (
     "Machine Learning, The French Revolution, Photosynthesis, "
@@ -105,13 +109,32 @@ def generate_flashcards(topic: str, count: int = 5) -> str:
     Returns:
         Numbered questions followed by answers for the agent to reveal on request.
     """
-    print(f"generate_flashcards called: topic={topic!r}, count={count}")
-
+    start = time.monotonic()
     count = min(max(count, 1), 10)
+
+    log.info(
+        "tool.generate_flashcards.start",
+        extra={
+            "tool_name": "generate_flashcards",
+            "status": "start",
+            "topic": topic,
+            "count_requested": count,
+        },
+    )
 
     matching_notes = _find_matching_notes(topic)
     if not matching_notes:
-        print(f"generate_flashcards: no notes found for topic={topic!r}")
+        duration_ms = round((time.monotonic() - start) * 1000, 1)
+        log.info(
+            "tool.generate_flashcards.complete",
+            extra={
+                "tool_name": "generate_flashcards",
+                "status": "success",
+                "topic": topic,
+                "results_count": 0,
+                "duration_ms": duration_ms,
+            },
+        )
         return (
             f"No notes found on '{topic}'. "
             f"Available topics: {AVAILABLE_TOPICS}."
@@ -120,24 +143,72 @@ def generate_flashcards(topic: str, count: int = 5) -> str:
     notes_text = "\n\n".join(
         f"## {n['title']}\n{n['content']}" for n in matching_notes
     )
-    print(f"generate_flashcards: found {len(matching_notes)} note(s), calling LLM")
+    log.info(
+        "tool.generate_flashcards.llm_call",
+        extra={
+            "tool_name": "generate_flashcards",
+            "notes_count": len(matching_notes),
+            "count_requested": count,
+        },
+    )
 
     try:
         flashcards = _call_llm_for_flashcards(notes_text, count)
     except json.JSONDecodeError as exc:
-        print(f"generate_flashcards: JSON parse error — {exc}")
+        duration_ms = round((time.monotonic() - start) * 1000, 1)
+        log.error(
+            "tool.generate_flashcards.error",
+            extra={
+                "tool_name": "generate_flashcards",
+                "status": "error",
+                "error_type": "json_parse",
+                "duration_ms": duration_ms,
+            },
+            exc_info=exc,
+        )
         return "Could not parse flashcards from the LLM response. Please try again."
     except Exception as exc:
-        print(f"generate_flashcards: unexpected error — {exc}")
+        duration_ms = round((time.monotonic() - start) * 1000, 1)
+        log.error(
+            "tool.generate_flashcards.error",
+            extra={
+                "tool_name": "generate_flashcards",
+                "status": "error",
+                "error_type": "llm_call",
+                "duration_ms": duration_ms,
+            },
+            exc_info=exc,
+        )
         return f"Error generating flashcards: {exc}"
 
     if not flashcards:
+        duration_ms = round((time.monotonic() - start) * 1000, 1)
+        log.warning(
+            "tool.generate_flashcards.empty",
+            extra={
+                "tool_name": "generate_flashcards",
+                "status": "success",
+                "topic": topic,
+                "results_count": 0,
+                "duration_ms": duration_ms,
+            },
+        )
         return (
             f"Could not generate any flashcards for '{topic}' "
             "from the available notes. The topic may not have enough content."
         )
 
-    print(f"generate_flashcards: generated {len(flashcards)} card(s)")
+    duration_ms = round((time.monotonic() - start) * 1000, 1)
+    log.info(
+        "tool.generate_flashcards.complete",
+        extra={
+            "tool_name": "generate_flashcards",
+            "status": "success",
+            "topic": topic,
+            "results_count": len(flashcards),
+            "duration_ms": duration_ms,
+        },
+    )
 
     # Format output: questions first, answers below a divider.
     # The agent is instructed (via system prompt) to show only questions
