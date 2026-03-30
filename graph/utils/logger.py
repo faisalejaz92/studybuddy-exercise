@@ -87,7 +87,10 @@ class _JsonFormatter(logging.Formatter):
 # ---------------------------------------------------------------------------
 
 def _configure_root_logger() -> None:
-    """Attach a JSON handler to the root logger if not already done."""
+    """Attach JSON stdout handler and in-memory handler to the root logger."""
+    import os  # noqa: PLC0415
+    from graph.utils.log_store import MemoryLogHandler  # noqa: PLC0415
+
     root = logging.getLogger()
 
     # Avoid adding duplicate handlers if the module is somehow re-imported
@@ -96,12 +99,15 @@ def _configure_root_logger() -> None:
            for h in root.handlers):
         return
 
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(_JsonFormatter())
-    root.addHandler(handler)
+    # 1. Stdout handler — JSON lines for log aggregators / terminal
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(_JsonFormatter())
+    root.addHandler(stdout_handler)
+
+    # 2. In-memory handler — feeds the /logs API endpoint
+    root.addHandler(MemoryLogHandler())
 
     # Default level: INFO. Override via LOG_LEVEL env var at startup if needed.
-    import os
     level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
     root.setLevel(getattr(logging, level_name, logging.INFO))
 

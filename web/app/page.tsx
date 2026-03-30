@@ -12,7 +12,7 @@ import { useStream } from "@langchain/langgraph-sdk/react";
 import { Messages } from "@/components/chat/messages";
 import { ChatInput, type ChatInputHandle } from "@/components/chat/input";
 import Link from "next/link";
-import { RefreshCw, User, ShieldCheck } from "lucide-react";
+import { RefreshCw, User, ShieldCheck, ScrollText } from "lucide-react";
 
 const USER_ID_KEY = "studybuddy_user_id";
 
@@ -129,6 +129,13 @@ export default function ChatPage() {
               Thread: {threadId.slice(0, 8)}...
             </span>
           )}
+          <Link
+            href="/logs"
+            className="flex items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            aria-label="Log Viewer"
+          >
+            <ScrollText className="h-4 w-4" />
+          </Link>
           <Link
             href="/admin"
             className="flex items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
