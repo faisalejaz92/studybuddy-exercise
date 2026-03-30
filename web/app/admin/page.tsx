@@ -17,6 +17,7 @@ import {
   ChevronRight,
   MessageSquare,
   RefreshCw,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -456,6 +457,13 @@ export default function AdminPage() {
         <span className="text-xs text-muted-foreground">
           Conversation thread inspector
         </span>
+        <Link
+          href="/logs"
+          className="ml-auto flex items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+          aria-label="Log Viewer"
+        >
+          <ScrollText className="h-4 w-4" />
+        </Link>
       </header>
 
       {/* ── Body: two-panel layout ── */}
