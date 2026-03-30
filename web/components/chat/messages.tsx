@@ -61,6 +61,23 @@ export function Messages({ messages, isLoading }: MessagesProps) {
         style={{ paddingBottom: "120px" }}
       >
         {messages.map((message, index): React.ReactNode => {
+          // Hide tool result messages — these are raw tool output the LLM
+          // reads internally, not content intended for the user.
+          if (message.type === "tool") return null;
+
+          // Hide intermediate AI messages that contain only tool call
+          // requests (no prose response yet). These are the agent's
+          // "thinking" steps between receiving user input and producing
+          // the final answer.
+          if (
+            message.type === "ai" &&
+            Array.isArray((message as { tool_calls?: unknown[] }).tool_calls) &&
+            ((message as { tool_calls: unknown[] }).tool_calls).length > 0 &&
+            !getMessageContent(message.content).trim()
+          ) {
+            return null;
+          }
+
           const content = getMessageContent(message.content);
           const role = getMessageRole(message);
 

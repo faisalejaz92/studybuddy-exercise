@@ -82,3 +82,12 @@ body {
   background-color: var(--background);
   color: var(--foreground);
 }
+
+/* Override Tailwind Typography's default gray prose body color so that
+   AI message text renders in the same near-black as the rest of the UI. */
+.prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-bullets: var(--foreground);
+  --tw-prose-counters: var(--foreground);
+}
