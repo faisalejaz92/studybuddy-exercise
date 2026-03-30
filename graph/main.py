@@ -11,7 +11,7 @@ from langgraph.prebuilt import create_react_agent
 
 from graph.config import ExperimentConfig
 from graph.prompts.system import format_system_prompt
-from graph.tools import search_notes
+from graph.tools import generate_flashcards, search_notes
 
 
 def build_graph(model: str | BaseChatModel, model_kwargs: dict | None = None):
@@ -35,7 +35,7 @@ def build_graph(model: str | BaseChatModel, model_kwargs: dict | None = None):
         model = init_chat_model(model, **(model_kwargs or {}))
 
     # Define tools
-    tools = [search_notes]
+    tools = [search_notes, generate_flashcards]
     print(f"Loaded {len(tools)} tools: {[t.name for t in tools]}")
 
     # System prompt
